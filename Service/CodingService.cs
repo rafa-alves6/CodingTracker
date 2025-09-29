@@ -1,8 +1,8 @@
 using CodingTracker.Controller;
 using CodingTracker.Entity;
-using CodingTracker.Input;
 using Spectre.Console;
 using System.Globalization;
+using static CodingTracker.Input.Enums;
 using static CodingTracker.Input.Validation;
 
 namespace CodingTracker.Service
@@ -11,12 +11,58 @@ namespace CodingTracker.Service
     {
         private readonly CodingController _codingController = new();
 
-        public void ViewAllSessions()
+        public void ViewFilteredSessionsProcess()
         {
-            var sessions = _codingController.GetAllSessions();
+            var period = AnsiConsole.Prompt(
+                new SelectionPrompt<TimePeriod>()
+                    .Title("Select a period to view:")
+                    .AddChoices(Enum.GetValues<TimePeriod>()));
 
+            var order = AnsiConsole.Prompt(
+                new SelectionPrompt<SortOrder>()
+                    .Title("Select the order:")
+                    .AddChoices(Enum.GetValues<SortOrder>()));
+            
+            var sessions = _codingController.GetSessionsByPeriod(period, order);
+            DisplaySessionsTable(sessions, $"Coding Sessions - {period.ToString().Replace('_', ' ')} ({order})");
+        }
+        
+        public void ReportsProcess()
+        {
+            var period = AnsiConsole.Prompt(
+                new SelectionPrompt<TimePeriod>()
+                    .Title("Select a period for the report:")
+                    .AddChoices(Enum.GetValues<TimePeriod>()));
+
+            var sessions = _codingController.GetSessionsByPeriod(period, SortOrder.Ascending);
+
+            if (!sessions.Any())
+            {
+                AnsiConsole.MarkupLine($"[yellow]No sessions found for the selected period: {period}.[/]");
+                return;
+            }
+
+            var totalDuration = TimeSpan.FromSeconds(sessions.Sum(s => s.Duration.TotalSeconds));
+            var averageDuration = TimeSpan.FromSeconds(sessions.Average(s => s.Duration.TotalSeconds));
+
+            var panel = new Panel(
+                $"[bold]Total Coding Time:[/] {totalDuration:hh\\:mm\\:ss}\n" +
+                $"[bold]Average Session Time:[/] {averageDuration:hh\\:mm\\:ss}\n" +
+                $"[bold]Total Sessions:[/] {sessions.Count}"
+            )
+            {
+                Header = new PanelHeader($"[cyan]Report for {period.ToString().Replace('_', ' ')}[/]"),
+                Border = BoxBorder.Rounded,
+                Padding = new Padding(1, 1, 1, 1)
+            };
+
+            AnsiConsole.Write(panel);
+        }
+
+        private void DisplaySessionsTable(List<CodingSession> sessions, string title)
+        {
             var table = new Table();
-            table.Title("[yellow]Coding Sessions[/]");
+            table.Title($"[yellow]{title}[/]");
             table.AddColumn("ID");
             table.AddColumn("Start Time");
             table.AddColumn("End Time");
@@ -64,7 +110,9 @@ namespace CodingTracker.Service
 
         public void DeleteSessionProcess()
         {
-            ViewAllSessions();
+            var allSessions = _codingController.GetAllSessions();
+            DisplaySessionsTable(allSessions, "All Coding Sessions");
+            
             var sessionId = AnsiConsole.Ask<int>("Enter the [red]ID[/] of the session you want to [red]delete[/]:");
 
             var session = _codingController.GetSessionById(sessionId);
@@ -80,7 +128,9 @@ namespace CodingTracker.Service
 
         public void UpdateSessionProcess()
         {
-            ViewAllSessions();
+            var allSessions = _codingController.GetAllSessions();
+            DisplaySessionsTable(allSessions, "All Coding Sessions");
+
             var sessionId = AnsiConsole.Ask<int>("Enter the [yellow]ID[/] of the session you want to [yellow]update[/]:");
 
             var session = _codingController.GetSessionById(sessionId);
