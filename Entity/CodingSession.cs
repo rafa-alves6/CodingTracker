@@ -1,10 +1,9 @@
-namespace CodingTracker.Entity
+namespace CodingTracker.Entity;
+
+public class CodingSession
 {
-    public class CodingSession
-    {
-        private long Id { get; set; }
-        private DateTime StartTime { get; set; }
-        private DateTime EndTime { get; set; }
-        private TimeSpan Duration { get; set; }
-    }
+    public int Id { get; set; }
+    public DateTime StartTime { get; set; }
+    public DateTime EndTime { get; set; }
+    public TimeSpan Duration => EndTime - StartTime;
 }

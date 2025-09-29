@@ -1,13 +1,16 @@
-namespace CodingTracker.Input;
-
-public class Enums
+namespace CodingTracker.Input
 {
-    public enum MenuAction
+    public class Enums
     {
-        Create_Session,
-        Read_Session,
-        Update_Session,
-        Delete_Session,
-        Leave_App
-    } 
+        public enum MenuAction
+        {
+            View_Sessions,
+            Start_Live_Session,
+            Stop_Live_Session,
+            Enter_Past_Session,
+            Update_Session,
+            Delete_Session,
+            Leave_App
+        }
+    }
 }
