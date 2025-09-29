@@ -2,6 +2,7 @@ using CodingTracker.Entity;
 using Dapper;
 using Microsoft.Data.Sqlite;
 using System.Configuration;
+using static CodingTracker.Input.Enums;
 
 namespace CodingTracker.Controller
 {
@@ -24,6 +25,33 @@ namespace CodingTracker.Controller
             }
         }
 
+        public List<CodingSession> GetSessionsByPeriod(TimePeriod period, SortOrder order)
+        {
+            var sqlOrder = order == SortOrder.Ascending ? "ASC" : "DESC";
+            var filterDate = period switch
+            {
+                TimePeriod.Last_7_Days => DateTime.Today.AddDays(-7),
+                TimePeriod.Last_30_Days => DateTime.Today.AddDays(-30),
+                TimePeriod.This_Year => new DateTime(DateTime.Today.Year, 1, 1),
+                _ => DateTime.MinValue
+            };
+            
+            using (var connection = new SqliteConnection(_connectionString))
+            {
+                string sql;
+                if (period == TimePeriod.All_Time)
+                {
+                    sql = $"SELECT * FROM CodingSessions ORDER BY StartTime {sqlOrder}";
+                    return connection.Query<CodingSession>(sql).ToList();
+                }
+                else
+                {
+                    sql = $"SELECT * FROM CodingSessions WHERE StartTime >= @FilterDate ORDER BY StartTime {sqlOrder}";
+                    return connection.Query<CodingSession>(sql, new { FilterDate = filterDate }).ToList();
+                }
+            }
+        }
+
         public void AddSession(DateTime startTime, DateTime endTime)
         {
             using (var connection = new SqliteConnection(_connectionString))
@@ -43,12 +71,12 @@ namespace CodingTracker.Controller
             }
         }
 
-        public CodingSession GetSessionById(int id)
+        public CodingSession? GetSessionById(int id) 
         {
             using (var connection = new SqliteConnection(_connectionString))
             {
                 var sql = "SELECT * FROM CodingSessions WHERE Id = @Id";
-                return connection.QuerySingleOrDefault<CodingSession>(sql, new { Id = id })!;
+                return connection.QuerySingleOrDefault<CodingSession>(sql, new { Id = id });
             }
         }
 

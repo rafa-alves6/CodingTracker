@@ -41,6 +41,7 @@ namespace CodingTracker.Input
                         MenuAction.Enter_Past_Session,
                         MenuAction.Update_Session,
                         MenuAction.Delete_Session,
+                        MenuAction.Reports,
                         MenuAction.Leave_App
                     );
                 }
@@ -64,7 +65,7 @@ namespace CodingTracker.Input
                         break;
 
                     case MenuAction.View_Sessions:
-                        _codingService.ViewAllSessions();
+                        _codingService.ViewFilteredSessionsProcess();
                         break;
 
                     case MenuAction.Update_Session:
@@ -73,6 +74,10 @@ namespace CodingTracker.Input
 
                     case MenuAction.Delete_Session:
                         _codingService.DeleteSessionProcess();
+                        break;
+
+                    case MenuAction.Reports:
+                        _codingService.ReportsProcess();
                         break;
 
                     case MenuAction.Leave_App:
